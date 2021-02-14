@@ -286,7 +286,7 @@ class YolactDetector:
         self.net.detect.use_fast_nms = args.fast_nms
         cfg.mask_proto_debug = args.mask_proto_debug
 
-    def evalimage(self, img):
+    def predict(self, img):
         frame = torch.from_numpy(img).cuda().float()
         batch = FastBaseTransform()(frame.unsqueeze(0))
 
@@ -300,7 +300,7 @@ class YolactDetector:
             
         img_numpy, classes, scores, masks = prep_display(preds, frame, None, None, undo_transform=False)
 
-        return img_numpy, classes, masks.squeeze()
+        return {"img": img_numpy, "class": classes, "socre": scores, "mask": masks.squeeze()}
         '''save_path = None
         if save_path is None:
             img_numpy = img_numpy[:, :, (2, 1, 0)]
@@ -316,10 +316,9 @@ from utils.logging_helper import setup_logger
 setup_logger(logging_level=logging.INFO)
 logger = logging.getLogger("yolact.eval")
 
-
 detector = YolactDetector()
-# img = cv2.imread("data/001763.ppm")
-# detector.evalimage(img)
+img = cv2.imread("data/001763.ppm")
+detector.predict(img)
 '''
 if __name__ == '__main__':
     from utils.logging_helper import setup_logger
