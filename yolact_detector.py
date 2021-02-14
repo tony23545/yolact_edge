@@ -46,7 +46,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description='YOLACT COCO Evaluation')
     parser.add_argument('--trained_model',
-                        default=None, type=str,
+                        default="weights/yolact_edge_54_800000.pth", type=str,
                         help='Trained state_dict file path to open. If "interrupt", this will open the interrupt file.')
     parser.add_argument('--top_k', default=5, type=int,
                         help='Further restrict the number of predictions to parse')
@@ -112,7 +112,7 @@ def parse_args(argv=None):
                         help='A path to a video to evaluate on. Passing in a number will use that index webcam.')
     parser.add_argument('--video_multiframe', default=1, type=int,
                         help='The number of frames to evaluate in parallel to make videos play at higher fps.')
-    parser.add_argument('--score_threshold', default=0, type=float,
+    parser.add_argument('--score_threshold', default=0.3, type=float,
                         help='Detections with a score under this threshold will not be considered. This currently only works in display mode.')
     parser.add_argument('--dataset', default=None, type=str,
                         help='If specified, override the dataset specified in the config with this one (example: coco2017_dataset).')
@@ -251,7 +251,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
                 cv2.rectangle(img_numpy, (x1, y1), (x1 + text_w, y1 - text_h - 4), color, -1)
                 cv2.putText(img_numpy, text_str, text_pt, font_face, font_scale, text_color, font_thickness, cv2.LINE_AA)
     
-    return img_numpy
+    return img_numpy, classes, scores, masks
 
 
 class YolactDetector:
@@ -297,10 +297,11 @@ class YolactDetector:
         
         with torch.no_grad():
             preds = self.net(batch, extras=extras)["pred_outs"]
+            
+        img_numpy, classes, scores, masks = prep_display(preds, frame, None, None, undo_transform=False)
 
-        img_numpy = prep_display(preds, frame, None, None, undo_transform=False)
-        
-        save_path = None
+        return img_numpy, classes, masks.squeeze()
+        '''save_path = None
         if save_path is None:
             img_numpy = img_numpy[:, :, (2, 1, 0)]
 
@@ -309,9 +310,17 @@ class YolactDetector:
             plt.title("detection")
             plt.show()
         else:
-            cv2.imwrite(save_path, img_numpy)
+            cv2.imwrite(save_path, img_numpy)'''
+
+from utils.logging_helper import setup_logger
+setup_logger(logging_level=logging.INFO)
+logger = logging.getLogger("yolact.eval")
 
 
+detector = YolactDetector()
+# img = cv2.imread("data/001763.ppm")
+# detector.evalimage(img)
+'''
 if __name__ == '__main__':
     from utils.logging_helper import setup_logger
     setup_logger(logging_level=logging.INFO)
@@ -320,4 +329,4 @@ if __name__ == '__main__':
 
     detector = YolactDetector()
     img = cv2.imread("data/001763.ppm")
-    detector.evalimage(img)
+    detector.evalimage(img)'''
